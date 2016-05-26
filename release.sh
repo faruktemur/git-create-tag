@@ -27,17 +27,21 @@ if [ ! -z "$PHPUNIT_COMMAND" ]
 then
     if [ "phpunit.phar" = "$PHPUNIT_COMMAND" ]
     then
-        php "$PHPUNIT_COMMAND" --stop-on-error src $*
+        php "$PHPUNIT_COMMAND" --stop-on-error src/ $*
     else
-        "$PHPUNIT_COMMAND" --stop-on-error src $*
+        "$PHPUNIT_COMMAND" --stop-on-error src/ $*
     fi
 else
     echo "PHPUNIT/PHPUNIT.PHAR NOT FOUND."
+    exit;
 fi
 
 if [[ $RESULT =~ FAILURES ]]
 then
     echo "${red}Not created tag! We have a problem in the unit tests.${reset}"
+    exit;
+elif [[ !$RESULT ]]; then
+    echo "${red}Cannot open file or folder.${reset}"
     exit;
 fi
 
