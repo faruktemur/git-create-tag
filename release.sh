@@ -1,5 +1,79 @@
 #!/bin/bash
 
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+echo "${green}Start release command${reset}"
+
+PHPUNIT_COMMAND=""
+MEMORY_LIMIT=512M
+PHPUNIT_VERSION="5.6.18"
+
+if hash phpunit 2>/dev/null;
+then
+    PHPUNIT_COMMAND="phpunit"
+elif [ -e phpunit.phar ]
+then
+    PHPUNIT_COMMAND="phpunit.phar"
+else
+    wget -qO phpunit.phar https://phar.phpunit.de/phpunit-"$PHPUNIT_VERSION".phar --no-check-certificate
+    PHPUNIT_COMMAND="phpunit.phar"
+fi
+
+echo "${green}Start running unit tests...${reset}"
+
+if [ ! -z "$PHPUNIT_COMMAND" ]
+then
+    if [ "phpunit.phar" = "$PHPUNIT_COMMAND" ]
+    then
+        php "$PHPUNIT_COMMAND" --stop-on-error src $*
+    else
+        "$PHPUNIT_COMMAND" --stop-on-error src $*
+    fi
+else
+    echo "PHPUNIT/PHPUNIT.PHAR NOT FOUND."
+fi
+
+if [[ $RESULT =~ FAILURES ]]
+then
+    echo "${red}Not created tag! We have a problem in the unit tests.${reset}"
+    exit;
+fi
+
+PHPUNIT_COMMAND=""
+MEMORY_LIMIT=512M
+PHPUNIT_VERSION="5.6.18"
+
+if hash phpunit 2>/dev/null;
+then
+    PHPUNIT_COMMAND="phpunit"
+elif [ -e phpunit.phar ]
+then
+    PHPUNIT_COMMAND="phpunit.phar"
+else
+    wget -qO phpunit.phar https://phar.phpunit.de/phpunit-"$PHPUNIT_VERSION".phar --no-check-certificate
+    PHPUNIT_COMMAND="phpunit.phar"
+fi
+
+
+if [ ! -z "$PHPUNIT_COMMAND" ]
+then
+    if [ "phpunit.phar" = "$PHPUNIT_COMMAND" ]
+    then
+       RESULT=`php "$PHPUNIT_COMMAND" -d memory_limit="$MEMORY_LIMIT" --stop-on-error src $*`
+    else
+        RESULT=`"$PHPUNIT_COMMAND" -d memory_limit="$MEMORY_LIMIT" --stop-on-error src $*`
+    fi
+else
+    echo "PHPUNIT/PHPUNIT.PHAR NOT FOUND."
+fi
+
+if [[ $RESULT =~ FAILURES ]]
+then
+    echo "We have a problem in the unit tests.";
+fi
+
 if [ -f VERSION ]; then
     BASE_STRING=`cat VERSION`
     BASE_LIST=(`echo $BASE_STRING | tr '.' ' '`)
